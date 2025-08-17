@@ -1,0 +1,131 @@
+name: AI Dynamic Code Updater
+
+on:
+  push:
+    paths:
+      - 'AI_COMMANDS.md'   # triggers only when instructions change
+  workflow_dispatch:       # manual run
+
+jobs:
+  ai-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install @azure-rest/ai-inference @azure/core-auth octokit fs
+
+      - name: Run AI Dynamic Updater
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }}
+          BRANCH: main
+        run: |
+          node -e "
+          const { Octokit } = require('octokit');
+          const { ModelClient, isUnexpected } = require('@azure-rest/ai-inference');
+          const { AzureKeyCredential } = require('@azure/core-auth');
+          const fs = require('fs');
+
+          const token = process.env.GH_TOKEN;
+          const octokit = new Octokit({ auth: token });
+          const repoOwner = process.env.GITHUB_REPOSITORY.split('/')[0];
+          const repoName = process.env.GITHUB_REPOSITORY.split('/')[1];
+          const branch = process.env.BRANCH || 'main';
+
+          const client = ModelClient('https://models.github.ai/inference', new AzureKeyCredential(process.env.AZURE_API_KEY));
+
+          async function readFile(path) {
+            try {
+              const { data } = await octokit.rest.repos.getContent({ owner: repoOwner, repo: repoName, path, ref: branch });
+              return { content: Buffer.from(data.content,'base64').toString('utf8'), sha: data.sha };
+            } catch(e) { if(e.status===404) return null; else throw e; }
+          }
+
+          async function commitFile(path, content, message, sha=null) {
+            await octokit.rest.repos.createOrUpdateFileContents({
+              owner: repoOwner,
+              repo: repoName,
+              path,
+              message,
+              content: Buffer.from(content).toString('base64'),
+              sha,
+              branch
+            });
+            console.log('Committed:', path);
+          }
+
+          async function generateFilesFromAI(instructions) {
+            const prompt = \`
+You are an AI coding assistant. 
+Read the instructions below and return a JSON object:
+- Keys: file paths (relative, e.g., src/main.js)
+- Values: file content
+- Indicate if a file should be deleted by using value '__DELETE__'
+
+Instructions:
+\${instructions}
+\`;
+
+            const response = await client.path('/chat/completions').post({
+              body: {
+                messages: [
+                  { role:'system', content:'You are an expert AI developer.' },
+                  { role:'user', content: prompt }
+                ],
+                model:'openai/gpt-4.1',
+                temperature:0.7
+              }
+            });
+            if(isUnexpected(response)) throw response.body.error;
+
+            const text = response.body.choices[0].message.content;
+            try {
+              return JSON.parse(text);
+            } catch(e) {
+              console.error('AI did not return valid JSON. Output:', text);
+              throw e;
+            }
+          }
+
+          async function main() {
+            const instructionsFile = 'AI_COMMANDS.md';
+            const instructions = await readFile(instructionsFile);
+            if(!instructions) return console.log('Instructions file not found.');
+
+            const fileMap = await generateFilesFromAI(instructions.content);
+
+            for(const path in fileMap) {
+              const content = fileMap[path];
+              const existing = await readFile(path);
+
+              if(content === '__DELETE__') {
+                if(existing) {
+                  await octokit.rest.repos.deleteFile({
+                    owner: repoOwner,
+                    repo: repoName,
+                    path,
+                    message: 'AI: Deleted file per instructions',
+                    sha: existing.sha,
+                    branch
+                  });
+                  console.log('Deleted:', path);
+                }
+                continue;
+              }
+
+              await commitFile(path, content, existing ? 'AI: Updated file' : 'AI: Created file', existing?.sha);
+            }
+          }
+
+          main().catch(console.error);
+          "
