@@ -29,7 +29,7 @@ jobs:
       - name: Run Universal AI Bot
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: node universal-ai-bot.js || echo "⚠️ AI bot failed, skipping commit."
+        run: node src/universal-ai-bot.js || echo "⚠️ AI bot failed, skipping commit."
 
       - name: Commit and Push changes (if any)
         run: |
