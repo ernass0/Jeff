@@ -1,0 +1,44 @@
+name: AI Universal Updater
+
+on:
+  push:
+    paths:
+      - "AI_COMMANDS.md"
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+
+jobs:
+  run-ai-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install node-fetch@2 fs
+
+      - name: Run Universal AI Bot
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: node universal-ai-bot.js || echo "⚠️ AI bot failed, skipping commit."
+
+      - name: Commit and Push changes (if any)
+        run: |
+          git config --global user.name "AI Updater Bot"
+          git config --global user.email "ai-bot@example.com"
+          git add .
+          if ! git diff --cached --quiet; then
+            echo "📄 Changed files:"
+            git diff --name-only --cached
+            git commit -m "🤖 Universal AI updated code"
+            git push
+          else
+            echo "✅ No changes detected, skipping commit."
+          fi
