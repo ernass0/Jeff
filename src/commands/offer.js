@@ -1,40 +1,58 @@
 // src/commands/offer.js
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
+
+const offersPath = path.join("data", "offers.json");
+function loadOffers() {
+  if (fs.existsSync(offersPath)) return JSON.parse(fs.readFileSync(offersPath, "utf8"));
+  return [];
+}
+function saveOffers(offers) {
+  fs.writeFileSync(offersPath, JSON.stringify(offers, null, 2), "utf8");
+}
+
+import { loadConfig } from "../utils/faConfig.js"; // reuse config loader from fa.js
 
 export default {
-  name: 'offer',
-  description: 'Send an offer to a free agent',
+  name: "offer",
+  description: "Submit a free agency offer (only during FA phases)",
   options: [
-    { name: 'player', type: 3, description: 'Player name', required: true },
-    { name: 'team', type: 3, description: 'Your team name', required: true },
-    { name: 'salary', type: 10, description: 'Offer salary', required: true },
-    { name: 'years', type: 4, description: 'Contract length', required: true },
-    { name: 'option', type: 3, description: 'Contract option', required: false },
+    { name: "player", type: 3, required: true, description: "Player you want to offer to" },
+    { name: "contract", type: 3, required: true, description: "Contract details (e.g. 2y / 20M)" },
   ],
+
   async execute(interaction) {
-    try {
-      const { player: playerName, team, salary, years, option } = Object.fromEntries(interaction.options.data.map(o => [o.name, o.value]));
-      const filePath = path.join('data', 'league.json');
-      const league = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const config = loadConfig();
 
-      const fa = league.freeAgents.find(f => f.name.toLowerCase() === playerName.toLowerCase());
-      if (!fa) return interaction.reply('❌ Free Agent not found.');
-
-      // Optional: check team's cap space
-      const teamObj = league.teams.find(t => t.name.toLowerCase() === team.toLowerCase());
-      if (!teamObj) return interaction.reply('❌ Team not found.');
-      const totalCapUsed = teamObj.players.reduce((a, p) => a + p.contract.salary, 0);
-      if (totalCapUsed + salary > teamObj.cap) return interaction.reply('❌ Not enough cap space for this offer.');
-
-      // Save offer
-      fa.offers.push({ team, salary, years, option: option || null });
-      fs.writeFileSync(filePath, JSON.stringify(league, null, 2), 'utf8');
-
-      await interaction.reply(`✅ Offer submitted to ${fa.name} by ${team}: $${salary} x${years} years${option ? ` (${option})` : ''}`);
-    } catch (err) {
-      console.error(err);
-      await interaction.reply('❌ Failed to submit offer.');
+    if (!config.currentPhase || !config.currentPhase.phase.startsWith("phase")) {
+      return interaction.reply({ content: "❌ Offers can only be made during **FA phases**.", ephemeral: true });
     }
+
+    const player = interaction.options.getString("player");
+    const contract = interaction.options.getString("contract");
+    const user = interaction.user;
+
+    // Save offer
+    const offers = loadOffers();
+    offers.push({
+      player,
+      contract,
+      by: user.tag,
+      userId: user.id,
+      phase: config.currentPhase.phase,
+      timestamp: Date.now(),
+    });
+    saveOffers(offers);
+
+    // Post in FA Offers channel
+    const channelId = config.channels.offers;
+    if (channelId) {
+      const ch = interaction.guild.channels.cache.get(channelId);
+      if (ch) {
+        ch.send(`📄 **Offer Submitted**\n👤 Player: **${player}**\n💰 Contract: **${contract}**\n📨 By: ${user}`);
+      }
+    }
+
+    return interaction.reply(`✅ Your offer for **${player}** (${contract}) has been submitted.`);
   },
 };
