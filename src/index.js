@@ -1,3 +1,17 @@
+// Keep-alive HTTP server (only if PORT is defined)
+import http from 'node:http';
+const PORT = process.env.PORT;
+if (PORT) {
+  const srv = http.createServer((req, res) => {
+    if (req.url === '/health') return res.end('ok');
+    res.end('Jeff alive');
+  });
+  srv.listen(PORT, '0.0.0.0', () =>
+    console.log(`Keep-alive HTTP server listening on ${PORT}`)
+  );
+}
+
+// Discord bot
 import 'dotenv/config';
 import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
 import fs from 'node:fs';
@@ -40,7 +54,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 if (!DISCORD_TOKEN) {
-  console.warn('DISCORD_TOKEN missing — bot cannot login (OK for GitHub‑only setup).');
+  console.warn('DISCORD_TOKEN missing — bot cannot login (OK for GitHub-only setup).');
 } else {
   client.login(DISCORD_TOKEN);
 }
