@@ -5,6 +5,7 @@ const HF_API_TOKEN = process.env.HF_API_TOKEN;
 const COMMANDS_FILE = "AI_COMMANDS.md";
 const OUTPUT_FILE = "AI_OUTPUT.md";
 
+// Call Hugging Face Starchat2 model
 async function callAI(prompt) {
   try {
     const response = await fetch(
@@ -31,6 +32,7 @@ async function callAI(prompt) {
   }
 }
 
+// Process [create], [update], [delete] commands
 async function processCommands() {
   if (!fs.existsSync(COMMANDS_FILE)) {
     console.log(`⚠️ Commands file "${COMMANDS_FILE}" not found, skipping commands.`);
@@ -56,8 +58,13 @@ async function processCommands() {
       const output = await callAI(prompt);
 
       if (fs.existsSync(file)) {
-        fs.writeFileSync(file, output);
-        console.log(`✅ Updated file: ${file}`);
+        const current = fs.readFileSync(file, "utf8");
+        if (current !== output) {
+          fs.writeFileSync(file, output);
+          console.log(`✅ Updated file: ${file}`);
+        } else {
+          console.log(`ℹ️ No changes for file: ${file}`);
+        }
       } else {
         console.log(`⚠️ Skipped update, file not found: ${file}`);
       }
@@ -74,12 +81,25 @@ async function processCommands() {
   }
 }
 
+// Generate AI_OUTPUT.md only if content changes
 async function generateGeneralOutput() {
   if (!fs.existsSync(COMMANDS_FILE)) return;
+
   const prompt = fs.readFileSync(COMMANDS_FILE, "utf8");
   const output = await callAI(prompt);
-  fs.writeFileSync(OUTPUT_FILE, output);
-  console.log(`📝 AI output written to ${OUTPUT_FILE}`);
+
+  let writeFile = true;
+  if (fs.existsSync(OUTPUT_FILE)) {
+    const current = fs.readFileSync(OUTPUT_FILE, "utf8");
+    if (current === output) writeFile = false;
+  }
+
+  if (writeFile) {
+    fs.writeFileSync(OUTPUT_FILE, output);
+    console.log(`📝 AI output written to ${OUTPUT_FILE}`);
+  } else {
+    console.log(`ℹ️ No changes in AI_OUTPUT.md, skipping write.`);
+  }
 }
 
 async function main() {
