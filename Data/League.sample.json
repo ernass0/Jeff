@@ -1,0 +1,86 @@
+{
+  "meta": { "name": "Sample League", "season": 2025, "updated": "" },
+  "teams": [
+    {
+      "id": "BOS",
+      "name": "Boston Celtics",
+      "gmUserId": "",
+      "assistantGmUserIds": [],
+      "capSpace": 45000000,
+      "capHolds": [],
+      "roster": ["p-001", "p-002"],
+      "picks": [
+        { "year": 2026, "round": 1, "owner": "BOS", "originalOwner": "BOS" },
+        { "year": 2027, "round": 2, "owner": "BOS", "originalOwner": "BOS" }
+      ],
+      "finances": { "payroll": 120000000, "tax": 0 }
+    },
+    {
+      "id": "LAL",
+      "name": "Los Angeles Lakers",
+      "gmUserId": "",
+      "assistantGmUserIds": [],
+      "capSpace": 30000000,
+      "capHolds": [],
+      "roster": ["p-010"],
+      "picks": [],
+      "finances": { "payroll": 130000000, "tax": 5000000 }
+    }
+  ],
+  "players": [
+    {
+      "id": "p-001",
+      "name": "John Sample",
+      "pos": "G",
+      "teamId": "BOS",
+      "ratings": { "ovr": 78, "three": 80, "def": 70, "reb": 50, "play": 75 },
+      "stats": { "ppg": 18.2, "apg": 6.1, "rpg": 3.2, "spg": 1.2, "bpg": 0.2 },
+      "awards": ["MIP 2024"],
+      "status": { "isFA": false, "rfa": false, "capHold": 0 },
+      "progressions": [{ "season": 2025, "changes": { "ovr": 2, "three": 3 } }]
+    },
+    {
+      "id": "p-002",
+      "name": "Mark Example",
+      "pos": "F",
+      "teamId": "BOS",
+      "ratings": { "ovr": 82, "three": 75, "def": 82, "reb": 76, "play": 70 },
+      "stats": { "ppg": 21.0, "apg": 3.2, "rpg": 7.5, "spg": 1.0, "bpg": 0.6 },
+      "awards": ["All‑Defense 2023"],
+      "status": { "isFA": false, "rfa": false, "capHold": 0 },
+      "progressions": []
+    },
+    {
+      "id": "p-010",
+      "name": "Alex Demo",
+      "pos": "C",
+      "teamId": "LAL",
+      "ratings": { "ovr": 85, "three": 60, "def": 88, "reb": 90, "play": 65 },
+      "stats": { "ppg": 17.4, "apg": 2.0, "rpg": 10.5, "spg": 0.8, "bpg": 1.8 },
+      "awards": [],
+      "status": { "isFA": false, "rfa": false, "capHold": 0 },
+      "progressions": []
+    }
+  ],
+  "freeAgency": {
+    "open": false,
+    "settings": { "holdsEnabled": true, "blindFA": false },
+    "offers": []
+  },
+  "draft": {
+    "order": ["BOS", "LAL"],
+    "lottery": {},
+    "board": {}
+  },
+  "channels": {
+    "news": "",
+    "offers": "",
+    "releases": "",
+    "renouncing": "",
+    "signings": "",
+    "standings": "",
+    "trades": ""
+  },
+  "trades": { "pending": [], "history": [] },
+  "flags": { "watchlist": [] }
+}
