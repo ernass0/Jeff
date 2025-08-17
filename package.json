@@ -23,3 +23,12 @@
     "octokit": "^4.0.2"
   }
 }
+
+// package.json (snippet)
+{
+  "scripts": {
+    "start": "node src/index.js",
+    "lint": "node -e \"console.log('lint placeholder')\""
+  },
+  "engines": { "node": ">=20.0.0" }
+}
