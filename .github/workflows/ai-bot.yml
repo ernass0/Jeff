@@ -1,15 +1,16 @@
-name: AI Repo Bot
+name: AI Repo Manager
 
 on:
-  workflow_dispatch: # manually trigger
+  workflow_dispatch: # manual trigger
   schedule:
-    - cron: '0 * * * *' # runs every hour
+    - cron: '0 * * * *' # every hour
 
 jobs:
-  ai-bot:
+  auto-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GH_TOKEN }}
@@ -20,13 +21,12 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: |
-          npm install @azure-rest/ai-inference @azure/core-auth octokit fs
+        run: npm install @azure-rest/ai-inference @azure/core-auth octokit fs
 
-      - name: Run AI Bot
+      - name: Run AI bot
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }} # optional if using Azure
+          AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }}
           BRANCH: main
         run: |
           node -e "
@@ -44,46 +44,86 @@ jobs:
           const client = ModelClient('https://models.github.ai/inference', new AzureKeyCredential(process.env.AZURE_API_KEY));
 
           async function listFiles(path='') {
-            const { data } = await octokit.rest.repos.getContent({ owner: repoOwner, repo: repoName, path, ref: branch });
-            let files = [];
-            for (const item of data) {
-              if(item.type === 'file') files.push(item.path);
-              else if(item.type === 'dir') files = files.concat(await listFiles(item.path));
-            }
-            return files;
+            try {
+              const { data } = await octokit.rest.repos.getContent({ owner: repoOwner, repo: repoName, path, ref: branch });
+              let files = [];
+              for(const item of data) {
+                if(item.type==='file') files.push(item.path);
+                else if(item.type==='dir') files = files.concat(await listFiles(item.path));
+              }
+              return files;
+            } catch(e) { if(e.status===404) return []; else throw e; }
           }
 
           async function readFile(filePath) {
             try {
               const { data } = await octokit.rest.repos.getContent({ owner: repoOwner, repo: repoName, path: filePath, ref: branch });
-              return { content: Buffer.from(data.content, 'base64').toString('utf8'), sha: data.sha };
+              return { content: Buffer.from(data.content,'base64').toString('utf8'), sha: data.sha };
             } catch(e) { if(e.status===404) return null; else throw e; }
           }
 
-          async function commitFile(path, content, message, sha) {
+          async function commitFile(path, content, message, sha=null) {
             await octokit.rest.repos.createOrUpdateFileContents({
-              owner: repoOwner, repo: repoName, path, message, content: Buffer.from(content).toString('base64'), sha, branch
+              owner: repoOwner,
+              repo: repoName,
+              path,
+              message,
+              content: Buffer.from(content).toString('base64'),
+              sha,
+              branch
             });
             console.log('Committed:', path);
           }
 
-          async function generateCode(prompt) {
+          async function deleteFile(path, sha) {
+            await octokit.rest.repos.deleteFile({
+              owner: repoOwner,
+              repo: repoName,
+              path,
+              message: 'AI: Deleted file automatically',
+              sha,
+              branch
+            });
+            console.log('Deleted:', path);
+          }
+
+          async function generateContent(prompt) {
             const response = await client.path('/chat/completions').post({
-              body: { messages:[{role:'system',content:'You are a coding assistant.'},{role:'user',content:prompt}], model:'openai/gpt-4.1', temperature:0.7 }
+              body: { messages: [{ role:'system', content:'You are an AI coding assistant that can write, delete, and improve code or documentation.' }, { role:'user', content:prompt }], model:'openai/gpt-4.1', temperature:0.7 }
             });
             if(isUnexpected(response)) throw response.body.error;
             return response.body.choices[0].message.content;
           }
 
-          async function autoUpdate() {
+          async function autoManageFiles() {
+            // 1. List all current files
             const files = await listFiles();
-            for(const file of files){
-              const fileData = await readFile(file);
-              const prompt = fileData ? 'Check this file for bugs, improve, update functions if needed:\n' + fileData.content : 'Create a new file with placeholder code.';
-              const newCode = await generateCode(prompt);
-              await commitFile(file,newCode,'AI: Updated automatically',fileData?.sha);
+
+            // 2. Optionally delete unwanted files (example: remove old temp files)
+            for(const f of files) {
+              if(f.endsWith('.temp')) {
+                const fileData = await readFile(f);
+                await deleteFile(f, fileData.sha);
+              }
+            }
+
+            // 3. Decide which files to create or update
+            const targetFiles = [
+              'src/main.js',
+              'docs/INSTRUCTIONS.md',
+              'data/info.json'
+            ];
+
+            for(const f of targetFiles) {
+              const fileData = await readFile(f);
+              const prompt = fileData
+                ? 'Improve or fix this file, add instructions or comments as needed:\n' + fileData.content
+                : 'Create a new file with useful code or information for the project. Include instructions, examples, and content.';
+              
+              const newContent = await generateContent(prompt);
+              await commitFile(f, newContent, 'AI: Created/Updated file automatically', fileData?.sha);
             }
           }
 
-          autoUpdate().catch(console.error);
+          autoManageFiles().catch(console.error);
           "
