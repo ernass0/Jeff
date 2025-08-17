@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import { Octokit } from 'octokit';
-import fs from 'fs';
 
 const token = process.env.GH_TOKEN;
 const hfToken = process.env.HF_API_TOKEN;
@@ -132,22 +131,6 @@ async function autoManageFiles() {
   }
 
   console.log('AI Bot finished');
-}
-
-// Run the bot
-autoManageFiles().catch(console.error);
-  // 2. Decide which files to create or update
-  const targetFiles = ['src/main.js', 'docs/INSTRUCTIONS.md', 'data/info.json'];
-
-  for (const f of targetFiles) {
-    const fileData = await readFile(f);
-    const prompt = fileData
-      ? 'Improve or fix this file, add instructions/comments:\n' + fileData.content
-      : 'Create a new file with useful code/info for the project. Include instructions, examples, content.';
-
-    const newContent = await generateContent(prompt);
-    await commitFile(f, newContent, 'AI: Created/Updated file', fileData?.sha);
-  }
 }
 
 // Run the bot
