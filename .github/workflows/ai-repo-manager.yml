@@ -1,0 +1,31 @@
+name: AI Repo Manager
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+
+jobs:
+  auto-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20   # <-- Upgrade to Node 20
+
+      - name: Install dependencies
+        run: npm install node-fetch octokit fs
+
+      - name: Run AI bot
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          BRANCH: main
+        run: node src/ai-bot.js   # <-- Run the script from a file
