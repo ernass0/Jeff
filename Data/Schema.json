@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "League Schema",
+  "type": "object",
+  "required": ["meta", "teams", "players", "freeAgency", "draft", "channels", "trades", "flags"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["name", "season", "updated"],
+      "properties": {
+        "name": { "type": "string" },
+        "season": { "type": "integer" },
+        "updated": { "type": "string" }
+      }
+    },
+    "teams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "gmUserId", "assistantGmUserIds", "capSpace", "capHolds", "roster", "picks", "finances"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "gmUserId": { "type": "string" },
+          "assistantGmUserIds": { "type": "array", "items": { "type": "string" } },
+          "capSpace": { "type": "number" },
+          "capHolds": { "type": "array", "items": { "type": "object" } },
+          "roster": { "type": "array", "items": { "type": "string" } },
+          "picks": { "type": "array", "items": { "type": "object" } },
+          "finances": {
+            "type": "object",
+            "required": ["payroll", "tax"],
+            "properties": { "payroll": { "type": "number" }, "tax": { "type": "number" } }
+          }
+        }
+      }
+    },
+    "players": { "type": "array", "items": { "type": "object" } },
+    "freeAgency": {
+      "type": "object",
+      "required": ["open", "settings", "offers"],
+      "properties": {
+        "open": { "type": "boolean" },
+        "settings": {
+          "type": "object",
+          "properties": { "holdsEnabled": { "type": "boolean" }, "blindFA": { "type": "boolean" } }
+        },
+        "offers": { "type": "array", "items": { "type": "object" } }
+      }
+    },
+    "draft": { "type": "object" },
+    "channels": {
+      "type": "object",
+      "properties": {
+        "news": { "type": "string" },
+        "offers": { "type": "string" },
+        "releases": { "type": "string" },
+        "renouncing": { "type": "string" },
+        "signings": { "type": "string" },
+        "standings": { "type": "string" },
+        "trades": { "type": "string" }
+      }
+    },
+    "trades": { "type": "object" },
+    "flags": { "type": "object" }
+  }
+}
