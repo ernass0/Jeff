@@ -1,3 +1,19 @@
+# Node
+node_modules/
+.env
+.DS_Store
+npm-debug.log*
+
+# Build cache
+.cache/
+dist/
+
+# OS
+Thumbs.db
+
+# Data scratch (not tracked) — we commit only through the bot using GitHub API
+.tmp/
+
 # Logs
 logs
 *.log
