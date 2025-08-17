@@ -1,6 +1,9 @@
-# AI Dynamic Code Commands
+# AI Command Example
 
-Create a new file at `src/test-log.js` with the following content:
-- The file should log "Hello from AI!" to the console when run.
-- Example output: Hello from AI!
-- The file should be valid JavaScript and ready to run with Node.
+[create] src/newFeature.js
+Write a function that says hello world.
+
+[update] src/utils.js
+Add a helper function called `sum(a, b)`.
+
+[delete] oldFeature.js
