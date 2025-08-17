@@ -30,6 +30,8 @@ jobs:
         run: node universal-ai-bot.js || echo "⚠️ AI bot failed, skipping commit."
 
       - name: Commit and Push changes (if any)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "AI Updater Bot"
           git config --global user.email "ai-bot@example.com"
@@ -38,7 +40,7 @@ jobs:
             echo "📄 Changed files:"
             git diff --name-only --cached
             git commit -m "🤖 Universal AI updated code"
-            git push
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} HEAD:main
           else
             echo "✅ No changes detected, skipping commit."
           fi
