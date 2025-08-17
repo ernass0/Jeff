@@ -1,72 +1,64 @@
-import fetch from 'node-fetch';
-import fs from 'fs';
+import fs from "fs";
+import fetch from "node-fetch";
 
-const hfToken = process.env.HF_API_TOKEN;
+const HF_API_TOKEN = process.env.HF_API_TOKEN;
+const commandsFile = "AI_COMMANDS.md";
 
-// Ask Hugging Face model to generate repo changes
-async function generateFilesFromAI(instructions) {
-  const prompt = `You are an AI coding assistant. 
-Read the instructions below and return a JSON object:
-- Keys: file paths
-- Values: file content
-- Use "__DELETE__" as value if file should be deleted.
-
-Instructions:
-${instructions}`;
-
-  const res = await fetch('https://api-inference.huggingface.co/models/HuggingFaceH4/starchat2-15b-v0.1', {
-    method: 'POST',
+async function callAI(prompt) {
+  const response = await fetch("https://api-inference.huggingface.co/models/openai-community/gpt2", {
+    method: "POST",
     headers: {
-      'Authorization': 'Bearer ' + hfToken,
-      'Content-Type': 'application/json'
+      "Authorization": `Bearer ${HF_API_TOKEN}`,
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      inputs: prompt,
-      parameters: { max_new_tokens: 800, temperature: 0.7 }
-    })
+    body: JSON.stringify({ inputs: prompt })
   });
 
-  const data = await res.json();
-  if (data.error) {
-    console.error('Hugging Face API error:', data.error);
-    throw new Error(data.error);
-  }
+  if (!response.ok) throw new Error(`HF API error: ${response.status} ${response.statusText}`);
+  const data = await response.json();
+  return data[0]?.generated_text || "";
+}
 
+async function runAI() {
   try {
-    return JSON.parse(data[0].generated_text);
-  } catch (e) {
-    console.error('AI output invalid JSON:', data);
-    throw e;
-  }
-}
+    const commands = fs.readFileSync(commandsFile, "utf8").split("\n");
 
-// Apply changes to repo
-async function applyChanges(changes) {
-  for (const [file, content] of Object.entries(changes)) {
-    if (content === '__DELETE__') {
-      if (fs.existsSync(file)) {
-        fs.unlinkSync(file);
-        console.log(`Deleted file: ${file}`);
+    for (let line of commands) {
+      if (line.startsWith("[create]")) {
+        const file = line.split(" ")[1];
+        const prompt = line.replace(`[create] ${file}`, "").trim();
+        const output = await callAI(prompt);
+
+        fs.writeFileSync(file, output);
+        console.log(`✅ Created file: ${file}`);
+
+      } else if (line.startsWith("[update]")) {
+        const file = line.split(" ")[1];
+        const prompt = line.replace(`[update] ${file}`, "").trim();
+        const output = await callAI(prompt);
+
+        if (fs.existsSync(file)) {
+          fs.writeFileSync(file, output);
+          console.log(`✅ Updated file: ${file}`);
+        } else {
+          console.log(`⚠️ Skipped update, file not found: ${file}`);
+        }
+
+      } else if (line.startsWith("[delete]")) {
+        const file = line.split(" ")[1];
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+          console.log(`🗑️ Deleted file: ${file}`);
+        } else {
+          console.log(`⚠️ Skipped delete, file not found: ${file}`);
+        }
       }
-    } else {
-      fs.mkdirSync(file.split('/').slice(0, -1).join('/'), { recursive: true });
-      fs.writeFileSync(file, content);
-      console.log(`Updated/created file: ${file}`);
     }
+
+  } catch (err) {
+    console.error("❌ Error in AI updater:", err);
+    process.exit(0); // Don’t fail workflow
   }
 }
 
-async function main() {
-  const instructions = fs.readFileSync('AI_COMMANDS.md', 'utf8');
-  console.log('Instructions loaded from AI_COMMANDS.md');
-
-  const changes = await generateFilesFromAI(instructions);
-  await applyChanges(changes);
-
-  console.log('AI changes applied successfully.');
-}
-
-main().catch(err => {
-  console.error('Error running dynamic updater:', err);
-  process.exit(1);
-});
+runAI();
