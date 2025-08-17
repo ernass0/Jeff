@@ -1,0 +1,84 @@
+Jeff/
+├─ .gitignore
+├─ .env.example
+├─ README.md
+├─ package.json
+├─ package-lock.json            # auto‑generated after first install (kept here as placeholder)
+├─ data/
+│  ├─ league.sample.json
+│  ├─ schema.json               # JSON schema for validation in CI
+│  └─ channels.sample.json
+├─ src/
+│  ├─ index.js                  # bot entry (no hosting instructions here)
+│  ├─ deploy-commands.js        # registers slash commands via REST
+│  ├─ lib/
+│  │  ├─ github.js              # read/write files in repo via GitHub API
+│  │  ├─ permissions.js         # owner‑only, GM checks
+│  │  └─ util.js                # helpers (embeds, parsing, etc.)
+│  └─ commands/
+│     ├─ export.js
+│     ├─ load.js
+│     ├─ roster.js
+│     ├─ ratings.js
+│     ├─ stats.js
+│     ├─ player.js
+│     ├─ set-channel.js
+│     ├─ set-gm.js
+│     ├─ remove-gm.js
+│     ├─ user.js
+│     ├─ server.js
+│     ├─ picks.js
+│     ├─ finances.js
+│     ├─ compare.js
+│     ├─ compare-stats.js
+│     ├─ top-prospects.js
+│     ├─ top-fas.js
+│     ├─ roster-prog.js
+│     ├─ awards.js
+│     ├─ renounce.js
+│     ├─ renounce-all.js
+│     ├─ cap-holds.js
+│     ├─ clear-cap-holds.js
+│     ├─ offer.js
+│     ├─ check-offers.js
+│     ├─ delete-offer.js
+│     ├─ clear-offers.js
+│     ├─ sign-free-agents.js
+│     ├─ extend-rfas.js
+│     ├─ extend-cap-holds.js
+│     ├─ rfa-extensions.js
+│     ├─ rookie-extensions.js
+│     ├─ set-fa.js              # group FA admin toggles (open-fa, enable-holds, disable-holds, blind-fa, first-time-setup)
+│     ├─ set-channel-standings.js
+│     ├─ set-channel-trades.js
+│     ├─ set-channel-news.js
+│     ├─ set-channel-offers.js
+│     ├─ set-channel-releases.js
+│     ├─ set-channel-renouncing.js
+│     ├─ set-channel-signings.js
+│     ├─ draft-order.js
+│     ├─ opicks.js
+│     ├─ draft-lottery.js       # basic scaffold
+│     ├─ draft-board.js         # add/remove/reorder
+│     ├─ pick.js                # make a draft pick
+│     ├─ trade-propose.js       # scaffold for trade flow with reactions
+│     ├─ trade-admin.js         # finalize/cancel after accept
+│     ├─ reload.js              # dev convenience: reloads a command
+│     ├─ score-calc.js
+│     ├─ score-calc-all.js
+│     ├─ boost.js
+│     ├─ boost-gl.js
+│     ├─ generate-skill-points.js
+│     ├─ progs.js
+│     ├─ prog-compare.js
+│     ├─ generate-cap-holds.js
+│     ├─ generate-bgmdl-values.js
+│     ├─ assign.js
+│     ├─ deaths.js
+│     └─ standings.js
+├─ .github/
+│  └─ workflows/
+│     ├─ ci.yml                 # lint, schema validate, dry‑run command build
+│     └─ deploy-commands.yml    # optional: registers slash commands if secrets present
+├─ scripts/
+│  └─ validate-schema.js        # used by CI to validate data/league.json
