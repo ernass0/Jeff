@@ -5,6 +5,7 @@ make help menus:
 1. with all commands and descriptions (expliding owner only commands)
 2. when !help shows all owner only commands with description
 
+
  Main commands:
 * roster: Team roster
  * ratings: Player ratings
