@@ -1,5 +1,6 @@
 import 'dotenv/config';
-import { REST, Routes } from '@discordjs/rest';
+import { REST } from '@discordjs/rest';
+import { Routes } from 'discord-api-types/v10';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -21,19 +22,28 @@ async function main() {
     console.log('Missing DISCORD_TOKEN or DISCORD_CLIENT_ID — skip deploy');
     return;
   }
+
   const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN);
   const body = await collectCommands();
 
-  if (DISCORD_GUILD_ID) {
-    await rest.put(Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID), { body });
-    console.log(`Registered ${body.length} guild commands.`);
-  } else {
-    await rest.put(Routes.applicationCommands(DISCORD_CLIENT_ID), { body });
-    console.log(`Registered ${body.length} global commands.`);
+  try {
+    if (DISCORD_GUILD_ID) {
+      await rest.put(
+        Routes.applicationGuildCommands(DISCORD_CLIENT_ID, DISCORD_GUILD_ID),
+        { body }
+      );
+      console.log(`✅ Registered ${body.length} guild commands.`);
+    } else {
+      await rest.put(
+        Routes.applicationCommands(DISCORD_CLIENT_ID),
+        { body }
+      );
+      console.log(`✅ Registered ${body.length} global commands.`);
+    }
+  } catch (error) {
+    console.error('❌ Failed to deploy commands:', error);
+    process.exit(1);
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main();
