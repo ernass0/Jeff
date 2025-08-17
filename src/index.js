@@ -1,5 +1,10 @@
-// Keep-alive HTTP server (only if PORT is defined)
 import http from 'node:http';
+import 'dotenv/config';
+import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 const PORT = process.env.PORT;
 if (PORT) {
   const srv = http.createServer((req, res) => {
@@ -11,22 +16,14 @@ if (PORT) {
   );
 }
 
-// Discord bot
-import 'dotenv/config';
-import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
-import fs from 'node:fs';
-import path from 'node:path';
-
 const { DISCORD_TOKEN, BOT_NAME } = process.env;
-
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 
-// Load commands dynamically
 const commandsPath = path.join(process.cwd(), 'src', 'commands');
 const files = fs.readdirSync(commandsPath).filter((f) => f.endsWith('.js'));
 for (const file of files) {
-  const mod = await import(path.join(commandsPath, file));
+  const mod = await import(pathToFileURL(path.join(commandsPath, file)).href);
   if (mod?.data && mod?.execute) client.commands.set(mod.data.name, mod);
 }
 
@@ -54,7 +51,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 });
 
 if (!DISCORD_TOKEN) {
-  console.warn('DISCORD_TOKEN missing — bot cannot login (OK for GitHub-only setup).');
+  console.warn('DISCORD_TOKEN missing — bot cannot login.');
 } else {
   client.login(DISCORD_TOKEN);
 }
