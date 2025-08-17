@@ -1,0 +1,25 @@
+{
+  "teams": [
+    {
+      "name": "Team A",
+      "players": [
+        {
+          "name": "Player 1",
+          "position": "G",
+          "age": 24,
+          "ratings": { "shooting": 80, "defense": 70 },
+          "contract": { "years": 3, "salary": 5_000_000, "type": "standard" }
+        }
+      ],
+      "cap": 100_000_000
+    }
+  ],
+  "freeAgents": [
+    {
+      "name": "Free Agent 1",
+      "position": "F",
+      "status": "UFA", 
+      "offers": []
+    }
+  ]
+}
