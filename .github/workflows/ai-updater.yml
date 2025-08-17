@@ -1,0 +1,39 @@
+name: AI Dynamic Code Updater
+
+on:
+  push:
+    paths:
+      - "AI_COMMANDS.md"
+
+jobs:
+  update-code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install node-fetch@2
+
+      - name: Run AI Bot
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: node ai-bot.js
+
+      - name: Run AI Dynamic Updater
+        env:
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+        run: node ai-dynamic-updater.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "AI auto-update from AI_COMMANDS.md" || echo "No changes"
+          git push
