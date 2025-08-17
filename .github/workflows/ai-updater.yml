@@ -20,20 +20,16 @@ jobs:
       - name: Install dependencies
         run: npm install node-fetch@2
 
-      - name: Run AI Bot
-        env:
-          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: node ai-bot.js
-
       - name: Run AI Dynamic Updater
         env:
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: node ai-dynamic-updater.js
-
-      - name: Commit and push changes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          node ai-dynamic-updater.js || echo "⚠️ AI updater failed, skipping commit."
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "AI Updater Bot"
+          git config --global user.email "ai-bot@example.com"
           git add .
-          git commit -m "AI auto-update from AI_COMMANDS.md" || echo "No changes"
+          git commit -m "🤖 AI updated code" || echo "No changes to commit"
           git push
