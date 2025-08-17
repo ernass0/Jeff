@@ -1,0 +1,32 @@
+name: AI Dynamic Code Updater
+
+on:
+  push:
+    paths:
+      - 'AI_COMMANDS.md'
+  workflow_dispatch:
+
+jobs:
+  ai-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install node-fetch octokit fs
+
+      - name: Run AI Dynamic Updater
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          BRANCH: main
+        run: node src/ai-dynamic-updater.js
