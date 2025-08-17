@@ -5,6 +5,8 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "lint": "node -e \"console.log('lint placeholder')\"",
     "schema:validate": "node ./scripts/validate-schema.js",
     "deploy:commands": "node src/deploy-commands.js",
@@ -21,14 +23,8 @@
     "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
     "octokit": "^4.0.2"
-  }
-}
-
-// package.json (snippet)
-{
-  "scripts": {
-    "start": "node src/index.js",
-    "lint": "node -e \"console.log('lint placeholder')\""
   },
-  "engines": { "node": ">=20.0.0" }
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
 }
